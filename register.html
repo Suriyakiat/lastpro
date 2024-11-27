@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>register</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+
+<style>
+    body {
+        margin: 0;
+        font-family: Arial, sans-serif;
+        line-height: 1.6;
+        background-color: #ffe4e6;
+        color: #333;
+        text-align: center;
+        padding-top: 90px;
+        /* เพิ่มระยะห่างให้รองรับ header */
+    }
+
+    .header {
+        background-color: #fff;
+        padding: 10px 0;
+        /* เพิ่ม Padding ให้ดูสมดุล */
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        position: fixed;
+        /* ทำให้ header ติดอยู่ด้านบน */
+        top: 0;
+        /* จัดให้ชิดบนสุด */
+        left: 0;
+        /* ชิดซ้ายสุด */
+        width: 100%;
+        /* ครอบคลุมทั้งความกว้างของหน้าจอ */
+        z-index: 1000;
+        /* ให้อยู่เหนือองค์ประกอบอื่น */
+    }
+</style>
+
+<body>
+    <div class="main-profile">
+        <img src="image/profile.jpg" alt="profile" class="profile-img">
+    </div>
+
+    <style>
+        .profile-img {
+            width: 200px;
+            height: 200px;
+            /* ความสูงและความกว้างต้องเท่ากันเพื่อให้เป็นวงกลม */
+            border-radius: 50%;
+            /* ทำให้รูปเป็นวงกลม */
+            border: 5px solid #ff6f91;
+            /* ขอบวงกลมสีชมพู */
+            object-fit: cover;
+            /* ปรับภาพให้พอดีกับวงกลม */
+            margin-bottom: 20px;
+            /* ระยะห่างระหว่างรูปกับฟอร์ม */
+
+        }
+    </style>
+
+    <div class="login">
+        <label for="email">อีเมล</label>
+        <input type="text" id="email" name="email" placeholder="กรอกอีเมล">
+
+        <label for="password">รหัสผ่าน</label>
+        <input type="password" id="password" name="password" placeholder="กรอกรหัสผ่าน">
+
+        <button type="register" id="goTologin">ลงทะเบียน</button>
+        <div id="login-result" class="login-result"></div>
+    </div>
+
+    <style>
+        .login {
+            max-width: 400px;
+            margin: 2rem auto;
+        }
+
+        /* การตั้งค่าป้ายชื่อ (label) */
+        .login label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: bold;
+            color: #333;
+        }
+
+        /* การตั้งค่าช่องป้อนข้อมูล (input) */
+        .login input {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 1rem;
+            transition: border-color 0.3s, box-shadow 0.3s;
+        }
+
+        /* เมื่อโฟกัสที่ input */
+        .login input:focus {
+            outline: none;
+            border-color: #ff6f91;
+            box-shadow: 0 0 6px rgba(255, 111, 145, 0.4);
+        }
+
+        /* การตั้งค่าปุ่ม (button) */
+        .login button {
+            width: 100%;
+            padding: 0.75rem;
+            margin-top: 1rem;
+            font-size: 1rem;
+            font-weight: bold;
+            color: #fff;
+            background: linear-gradient(45deg, #ff6f91, #ff8e53);
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.3s;
+        }
+
+        /* เมื่อ hover หรือ active ปุ่ม */
+        .login button:hover {
+            box-shadow: 0 8px 15px rgba(255, 111, 145, 0.4);
+            transform: translateY(-2px);
+        }
+
+        .login button:active {
+            box-shadow: 0 4px 10px rgba(253, 65, 109, 0.3);
+            transform: translateY(0);
+        }
+    </style>
+
+    <script>
+        document.getElementById('goTologin').addEventListener('click', function () {
+            const emailInput = document.getElementById('email');
+            const passwordInput = document.getElementById('password');
+            const resultDiv = document.getElementById('login-result');
+
+            // ตรวจสอบว่าผู้ใช้กรอกข้อมูลครบถ้วนหรือไม่
+            const email = emailInput.value.trim();
+            const password = passwordInput.value.trim();
+
+            if (!email || !password) {
+                resultDiv.textContent = "กรุณากรอกอีเมลและรหัสผ่าน!";
+                resultDiv.style.color = "red";
+                return;
+            }
+
+            // ดึงข้อมูลผู้ใช้จาก Local Storage
+            let users = [];
+
+            try {
+                // พยายามดึงข้อมูลจาก Local Storage
+                users = JSON.parse(localStorage.getItem('users')) || [];
+            } catch (e) {
+                console.error("Error parsing users from localStorage", e);
+            }
+
+            // ตรวจสอบว่าผู้ใช้งานมีอยู่ในระบบหรือไม่
+            const userExists = users.some(user => user.email === email);
+            if (userExists) {
+                resultDiv.textContent = "อีเมลนี้ถูกใช้ลงทะเบียนแล้ว!";
+                resultDiv.style.color = "red";
+                return;
+            }
+
+            // เพิ่มผู้ใช้ใหม่เข้าไปในระบบ
+            users.push({ email, password });
+
+            // บันทึกข้อมูลผู้ใช้ลงใน Local Storage
+            localStorage.setItem('users', JSON.stringify(users));
+
+            resultDiv.textContent = "ลงทะเบียนสำเร็จ! กำลังไปที่หน้าเข้าสู่ระบบ...";
+            resultDiv.style.color = "green";
+
+            // ไปยังหน้า Login
+            setTimeout(function () {
+                window.location.href = "index.html";
+            }, 2000);
+        });
+
+
+    </script>
+</body>
+
+</html>
