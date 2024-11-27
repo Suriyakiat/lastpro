@@ -1,63 +1,56 @@
 const express = require('express');
 const bodyParser = require('body-parser');
-const mssql = require('mssql');
-const cors = require('cors');
-
-const app = express();
-app.use(cors());
-app.use(bodyParser.json());
+const sql = require('mssql');
 
 // การตั้งค่าการเชื่อมต่อ MSSQL
-const dbConfig = {
-    user: 'ipuetdatabase',         // ชื่อผู้ใช้งานฐานข้อมูล
-    password: 'Audi2546', // รหัสผ่าน
-    server: 'ipuetdatabase.database.windows.net',     // ชื่อเซิร์ฟเวอร์
-    database: 'ipuetdatabase',// ชื่อฐานข้อมูล
+const config = {
+    user: 'ipuetdatabase',          // ชื่อผู้ใช้ MSSQL
+    password: 'Audi2546',      // รหัสผ่าน MSSQL
+    server: 'ipuetdatabase.database.windows.net',           // ชื่อเซิร์ฟเวอร์ MSSQL
+    database: 'ipuetdatabase',  // ชื่อฐานข้อมูล
     options: {
-        encrypt: true,       // ใช้ในกรณี Azure SQL
-        trustServerCertificate: true
+        encrypt: true,             // สำหรับ Azure
+        trustServerCertificate: true, // สำหรับ local dev
     }
 };
 
-// ฟังก์ชันเชื่อมต่อฐานข้อมูล
-async function connectToDB() {
-    try {
-        const pool = await mssql.connect(dbConfig);
-        return pool;
-    } catch (err) {
-        console.error('Database connection failed: ', err);
-        throw err;
-    }
-}
+const app = express();
+app.use(bodyParser.json());
 
-// Endpoint สำหรับ Login
-app.post('/login', async (req, res) => {
-    const { email, password } = req.body;
+// เชื่อมต่อ MSSQL
+sql.connect(config).then(pool => {
+    console.log("Connected to MSSQL");
 
-    if (!email || !password) {
-        return res.status(400).json({ message: 'กรุณากรอกอีเมลและรหัสผ่าน!' });
-    }
+    // Route สำหรับล็อกอิน
+    app.post('/login', async (req, res) => {
+        const { email, password } = req.body;
 
-    try {
-        const pool = await connectToDB();
-        const result = await pool.request()
-            .input('email', mssql.VarChar, email)
-            .input('password', mssql.VarChar, password)
-            .query('SELECT * FROM Users WHERE email = @email AND password = @password');
-
-        if (result.recordset.length > 0) {
-            res.json({ message: 'เข้าสู่ระบบสำเร็จ!', success: true });
-        } else {
-            res.status(401).json({ message: 'ชื่อผู้ใช้งานหรือรหัสผ่านไม่ถูกต้อง!' });
+        if (!email || !password) {
+            return res.status(400).send({ message: "กรุณากรอกข้อมูลให้ครบถ้วน" });
         }
-    } catch (err) {
-        console.error(err);
-        res.status(500).json({ message: 'เกิดข้อผิดพลาดในระบบ!' });
-    }
+
+        try {
+            const result = await pool.request()
+                .input('email', sql.VarChar, email)
+                .input('password', sql.VarChar, password)
+                .query(`SELECT * FROM Users WHERE email = @email AND password = @password`);
+
+            if (result.recordset.length > 0) {
+                res.status(200).send({ message: "เข้าสู่ระบบสำเร็จ" });
+            } else {
+                res.status(401).send({ message: "อีเมลหรือรหัสผ่านไม่ถูกต้อง" });
+            }
+        } catch (error) {
+            console.error(error);
+            res.status(500).send({ message: "เกิดข้อผิดพลาดในระบบ" });
+        }
+    });
+
+}).catch(err => {
+    console.error('Database connection failed: ', err);
 });
 
-// เริ่มเซิร์ฟเวอร์
-const PORT = 3000;
-app.listen(PORT, () => {
-    console.log(`Server running on http://localhost:${PORT}`);
+// เปิดเซิร์ฟเวอร์
+app.listen(3000, () => {
+    console.log('Server is running on http://localhost:3000');
 });
